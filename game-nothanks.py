@@ -112,6 +112,7 @@ class CardgameEnv(gym.Env):
         assert self.action_space.contains(action)          
         
         if action or self.playercoin == 0 : # Pick up the card if action determines it or if no coins left
+            
             prevpoints = self.playercoin - sum(self.playerhand)
             self.playerhand.append(self.card)
             self.playercoin += self.coin
@@ -119,6 +120,7 @@ class CardgameEnv(gym.Env):
             self.card, self.deck = draw_card(self.np_random, self.deck)
             currentpoints = self.playercoin - sum(self.playerhand)            
             reward = currentpoints - prevpoints
+            #print("Agent picks card up. Points:{}, Coins:{}, New Card:{}".format(currentpoints, self.playercoin, self.card))
             
         else: # Use coin to avoid taking the card
             prevpoints = self.playercoin - sum(self.playerhand)
@@ -126,6 +128,7 @@ class CardgameEnv(gym.Env):
             self.coin += 1
             currentpoints = self.playercoin - sum(self.playerhand)            
             reward = currentpoints - prevpoints
+            #print("Agent plays coin. Points:{}, Coins:{}, Coins on table:{}".format(currentpoints, self.playercoin, self.coin))
             
             # Since current player did not pick the card, the dealer needs to act next
             # The dealer uses a random policy to interact with the game
@@ -134,11 +137,13 @@ class CardgameEnv(gym.Env):
                 self.dealerhand.append(self.card)
                 self.dealercoin += self.coin
                 self.coin = 0
-                self.card, self.deck = draw_card(self.np_random, self.deck)                
+                self.card, self.deck = draw_card(self.np_random, self.deck) 
+                #print("Dealer picks card up. Points:{}, Coins:{}, New Card:{}".format(self.dealercoin - sum(self.dealerhand), self.dealercoin, self.card))
             else: # dealer uses coins to avoid taking the card
                 self.dealercoin -= 1
                 self.coin += 1
-        
+                #print("Dealer plays coin. Points:{}, Coins:{}, Coins on table:{}".format(self.dealercoin - sum(self.dealerhand), self.dealercoin, self.coin))
+                
         if len(self.deck) == 0:
             done = True
         else:
@@ -159,13 +164,14 @@ class CardgameEnv(gym.Env):
         self.dealerhand = []
         self.playercoin = 3
         self.dealercoin = 3
+        #print("New Card: {}".format(self.card))
         return self._get_obs()
 
 # Create a deck of cards
 
    
 env = CardgameEnv()
-Q, policy = mc_control_epsilon_greedy(env, num_episodes=100000, epsilon=0.1)
+Q, policy = mc_control_epsilon_greedy(env, num_episodes=1000000, epsilon=0.1)
 
 
 V = defaultdict(float)
